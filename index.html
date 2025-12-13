@@ -1080,7 +1080,7 @@
                                 🔐 Extract Patterns
                             </button>
                             <p style="margin-top: 6px; font-size: 0.85em;">Or copy: <button class="copy-button" onclick="copyBookmarklet()" style="padding: 4px 12px; font-size: 0.8em;">📋 Copy</button></p>
-                            <div class="code-block" id="bookmarkletCode" style="margin: 8px 0; display: none; font-size: 0.65em;">javascript:(function(){if(!window.location.href.includes('myactivity.google.com/dark-web-report/results')){alert('⚠️ Use on: myactivity.google.com/dark-web-report/results');return}const html=document.documentElement.outerHTML;const patterns=new Set();const regex=/([a-zA-Z0-9]+•+)/g;let match;while((match=regex.exec(html))!==null){const pattern=match[1];if(pattern.match(/^[a-zA-Z0-9]{1,}•{2,}$/)){patterns.add(pattern)}}if(patterns.size===0){alert('❌ No patterns found');return}const sorted=Array.from(patterns).sort();const text=sorted.join('\n');navigator.clipboard.writeText(text).then(()=>{alert(`✅ ${sorted.length} patterns copied!`)}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert(`✅ Copied!`)})})();</div>
+                            <div class="code-block" id="bookmarkletCode" style="margin: 8px 0; display: none; font-size: 0.65em;">javascript:(function(){if(!window.location.href.includes('myactivity.google.com/dark-web-report/results')){alert('⚠️ Use on detail page');return}const sections=document.querySelectorAll('section');let passwordSection=null;for(let s of sections){if(s.textContent.includes('Mot de passe')){passwordSection=s;break}}if(!passwordSection){alert('❌ No password section found');return}const patterns=new Set();const allText=passwordSection.innerText;const regex=/([a-zA-Z0-9!@#$%^&*()_+=\-\[\]{};:'",.<>?/\\|`~]+•{2,})/g;let match;while((match=regex.exec(allText))!==null){const p=match[1];if(!p.includes('Mot')&&!p.includes('passe')){patterns.add(p)}}if(patterns.size===0){alert('❌ No patterns found');return}const text=Array.from(patterns).join('\n');navigator.clipboard.writeText(text).then(()=>{alert(`✅ ${patterns.size} patterns copied!`)}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert(`✅ Copied!`)})})();</div>
                             <p style="margin-top: 8px; font-size: 0.85em;"><strong>Use:</strong> Google Report → Bookmarklet → Copy</p>
                         </div>
                     </div>
@@ -1147,6 +1147,7 @@
                 this.currentJsonFile = null;
                 this.currentJsonContent = null;
                 this.tracked = new Set();
+                this.donePatterns = new Set(); // Track patterns marqués "done"
                 this.setupEventListeners();
             }
 
@@ -1208,6 +1209,19 @@
                 URL.revokeObjectURL(url);
                 
                 alert('Progress saved! The file has been downloaded with your ignored items.');
+            }
+
+            toggleDone(patternName) {
+                if (this.donePatterns.has(patternName)) {
+                    this.donePatterns.delete(patternName);
+                } else {
+                    this.donePatterns.add(patternName);
+                }
+                this.render();
+            }
+
+            isDone(patternName) {
+                return this.donePatterns.has(patternName);
             }
 
             toggleFolder(patternName) {
@@ -1455,6 +1469,9 @@
                                     <span class="folder-toggle ${isCollapsed ? 'collapsed' : ''}">📁</span>
                                     <span class="folder-title">${this.escapeHtml(openedPattern)}</span>
                                     <span class="folder-count">${items.length}</span>
+                                    <span onclick="event.stopPropagation(); checker.toggleDone('${openedPattern.replace(/'/g, "\\'")}')" style="cursor: pointer; font-size: 1.2em; margin: 0 5px;">
+                                        ${this.isDone(openedPattern) ? '✅' : '⭕'}
+                                    </span>
                                     <span class="folder-minimize" onclick="event.stopPropagation(); checker.toggleFolder('${openedPattern.replace(/'/g, "\\'")}')">━</span>
                                 </div>
                                 <div class="pattern-folder-content ${isCollapsed ? 'collapsed' : ''}">
